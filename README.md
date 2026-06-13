@@ -97,6 +97,20 @@ Z₃ cyclic dynamics underlie **SuperInstance** agent coordination. The Fibonacc
 - Vajda, Steven. *Fibonacci and Lucas Numbers and the Golden Section*, Wiley, 1989.
 - Stanley, Richard P. *Enumerative Combinatorics, Vol. 1*, Cambridge UP, 2011.
 
+
+
+## Complexity Summary
+
+| Operation | Time | Space |
+|---|---|---|
+| ternary_add(a, b) | O(1) | O(1) |
+| fibonacci(n) | O(n) | O(n) |
+| tribonacci(n) | O(n) | O(n) |
+| find_period(seq) | O(n²) naive, O(n) KMP | O(1) |
+| pisano_period(m) | O(m²) | O(1) |
+
+Z₃ Fibonacci has period ≤ 8; Tribonacci ≤ 27. These short cycles make ternary recurrences fully enumerable for analysis.
+
 ## License
 
 MIT
