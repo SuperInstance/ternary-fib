@@ -1,70 +1,101 @@
-# ternary-fib
+# Ternary Fibonacci — Fibonacci Sequences in Z₃ Balanced Ternary Arithmetic
 
-**Ternary Fibonacci, Tribonacci, and balanced ternary arithmetic.**
+**Ternary Fibonacci** computes Fibonacci and Tribonacci sequences using balanced ternary addition mod 3, where the alphabet {-1, 0, +1} is closed under addition. It also finds sequence periods (Pisano periods for arbitrary moduli) and analyzes the cyclic structure of ternary recurrences.
 
-The Fibonacci sequence is 1, 1, 2, 3, 5, 8, 13… — each number is the sum of the two before it. But what happens when addition wraps? When the result is always in `{-1, 0, +1}`?
+## Why It Matters
 
-It turns out ternary Fibonacci has **period 8**: `1, 1, -1, 0, -1, -1, 1, 0`. The sequence loops forever through a specific pattern. Ternary Tribonacci has **period 13**. These are the Pisano periods for modulus 3 — and they're the fundamental rhythms of cyclic ternary systems.
+The Fibonacci sequence mod n (the Pisano period) is a classic number-theoretic object with surprising depth. In Z₃ specifically, the period is short and the dynamics are fully characterizable — making ternary Fibonacci a testbed for cyclic phenomena in agent systems. The tribonacci extension adds a third-order recurrence that models rock-paper-scissors cycles directly: three competing strategies that each beat one and lose to one. Understanding these cycles is essential for designing ternary agent systems that don't get stuck in pathological oscillations.
 
-This crate computes these sequences, finds their periods, and provides the balanced ternary arithmetic that makes it all work.
+## How It Works
 
-## What's Inside
+### Ternary Addition
 
-- **`ternary_add(a, b)`** — balanced ternary addition: always returns {-1, 0, +1}, wraps mod 3
-- **`fibonacci(a, b, n)`** — ternary Fibonacci sequence starting from any two seeds
-- **`tribonacci(a, b, c, n)`** — ternary Tribonacci (3-term recurrence)
-- **`find_period(seq)`** — find the repeating period of any ternary sequence
-- **`pisano_period(modulus)`** — compute the Pisano period for Fibonacci under a given modulus
-- **`lucas_ternary(n)`** — ternary Lucas sequence (closely related to Fibonacci)
-- **`nega_fibonacci(n)`** — Fibonacci with negative indices, in ternary
+Balanced ternary addition wraps mod 3, mapping back to {-1, 0, +1}:
 
-## Quick Example
-
-```rust
-use ternary_fib::*;
-
-// Ternary Fibonacci: period 8
-let seq = fibonacci(1, 1, 20);
-// [1, 1, -1, 0, -1, -1, 1, 0, 1, 1, -1, 0, ...] — repeats every 8
-
-let period = find_period(&seq);
-assert_eq!(period, 8); // The fundamental ternary rhythm
-
-// Ternary Tribonacci: period 13
-let trib = tribonacci(1, 1, 1, 30);
-assert_eq!(find_period(&trib), 13); // A longer cycle
-
-// Pisano period for mod 3
-assert_eq!(pisano_period(3), 8); // Fibonacci mod 3 repeats every 8
-
-// Custom seeds change the starting point but not the period
-let custom = fibonacci(-1, 1, 20);
-// Same period 8, different phase
+```
+1 + 1 = 2 mod 3 = -1   (wraps to negative)
+(-1) + (-1) = -2 → 1    (wraps to positive)
+1 + (-1) = 0
 ```
 
-## The Insight
+This defines addition in Z₃, the cyclic group of order 3. The operation is O(1).
 
-**Period 8 is the heartbeat of ternary cyclic dynamics.** In the broader ternary ecosystem, Z₃ cyclic dominance (rock-paper-scissors) creates oscillations with period ~50. But at the arithmetic level — pure addition mod 3 — the rhythm is period 8. This is the *inner* clock, the faster pulse underneath the larger oscillation. Fibonacci timing (period 8) as a natural conversation rhythm is why the ten-forward conversation engine uses 8-tick cycles.
+### Fibonacci Sequence
 
-**Use cases:**
-- **Algorithmic music** — period-8 as a rhythmic foundation, period-13 as an alternative time signature
-- **Sequence analysis** — detect cyclic structure in ternary data
-- **Cryptography** — ternary Fibonacci as a simple PRNG with known period
-- **Number theory education** — Pisano periods are a beautiful bridge between arithmetic and cyclic dynamics
-- **Multi-agent timing** — Fibonacci-based round-robin scheduling
+Each term is `ternary_add(prev, curr)`:
 
-## See Also
+```
+F(0) = a, F(1) = b
+F(n) = ternary_add(F(n-2), F(n-1)) mod 3
+```
 
-- **ternary-collatz** — another famous integer sequence projected to ternary
-- **ternary-loop** — general-purpose period detection in ternary signals
-- **ternary-phase** — phase relationships between Fibonacci-timed oscillators
-- **ternary-polyrhythm** — layer multiple Fibonacci rhythms for polyrhythmic patterns
+Computing n terms is O(n). Because Z₃ has only 9 possible (prev, curr) pairs, the sequence is periodic with period ≤ 9.
 
-## Install
+### Tribonacci Sequence
+
+Three-term recurrence using the same Z₃ addition:
+
+```
+T(n) = ternary_add(ternary_add(T(n-3), T(n-2)), T(n-1))
+```
+
+Period is bounded by 27 (3³ states for 3 consecutive terms).
+
+### Pisano Period
+
+For a general modulus m, the Pisano period π(m) is the cycle length of Fibonacci mod m. It satisfies:
+
+```
+π(m) ≤ 6m   (Wall's conjecture)
+π(2) = 3, π(3) = 8, π(5) = 20
+```
+
+Computed by iterating until the (0, 1) state recurs — O(m²) worst case.
+
+### Period Detection
+
+For any ternary sequence, finds the smallest period p such that seq[i] = seq[i-p] for all valid i. This is O(n²) in the naive implementation, O(n) with KMP.
+
+## Quick Start
+
+```rust
+use ternary_fib::{fibonacci, tribonacci, ternary_add, find_period};
+
+// Ternary Fibonacci starting from 0, 1
+let seq = fibonacci(0, 1, 12);
+println!("{:?}", seq); // [0, 1, 1, -1, 0, -1, -1, 0, 1, 1, -1, 0] — period 8!
+
+// Tribonacci
+let tri = tribonacci(0, 1, -1, 15);
+
+// Find period
+let period = find_period(&seq);
+println!("Period: {}", period);
+```
 
 ```bash
 cargo add ternary-fib
 ```
+
+## API
+
+| Type / Function | Description |
+|---|---|
+| `ternary_add(a, b) → i8` | Z₃ addition: wraps mod 3 to {-1, 0, +1} |
+| `fibonacci(a, b, n) → Vec<i8>` | n-term Fibonacci in Z₃ |
+| `tribonacci(a, b, c, n) → Vec<i8>` | n-term Tribonacci in Z₃ |
+| `find_period(seq) → usize` | Smallest period of a sequence |
+| `pisano_period(modulus) → usize` | Fibonacci cycle length mod m |
+
+## Architecture Notes
+
+Z₃ cyclic dynamics underlie **SuperInstance** agent coordination. The Fibonacci period in Z₃ determines the natural oscillation frequency of ternary agent strategies. The γ + η = C conservation law is preserved by Z₃ arithmetic: the sum γ + η always maps to a value in {-1, 0, +1}, maintaining the ternary contract. See [Architecture](https://github.com/SuperInstance/SuperInstance/blob/main/ARCHITECTURE.md).
+
+## References
+
+- Wall, D. D. "Fibonacci Series Modulo m," *American Mathematical Monthly*, 67(6), 1960 — Pisano periods.
+- Vajda, Steven. *Fibonacci and Lucas Numbers and the Golden Section*, Wiley, 1989.
+- Stanley, Richard P. *Enumerative Combinatorics, Vol. 1*, Cambridge UP, 2011.
 
 ## License
 
